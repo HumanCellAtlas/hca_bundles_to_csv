@@ -49,7 +49,7 @@ def main():
 
         obj = {}
 
-        for dir in glob.glob(bundle +  os.sep+ '*.json'):
+        for dir in glob.glob(bundle_dir + os.sep + bundle +  os.sep+ '*.json'):
             head, tail = os.path.split(dir)
 
             # we don't need links.json
@@ -62,7 +62,8 @@ def main():
             flatten(obj, metadoc, match.group(1))
 
         if obj:
-            all_keys = list(set(obj.keys()))
+            all_keys.extend(obj.keys())
+            all_keys = list(set(all_keys))
             all_objects.append(obj)
 
 
