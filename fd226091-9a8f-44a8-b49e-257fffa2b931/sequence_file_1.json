@@ -1,0 +1,16 @@
+{
+    "describedBy": "https://schema.humancellatlas.org/type/file/6.5.2/sequence_file",
+    "schema_type": "file",
+    "file_core": {
+        "file_name": "PBMC_RNA_R2.fastq.gz",
+        "file_format": "fastq.gz"
+    },
+    "read_index": "read2",
+    "lane_index": 1,
+    "read_length": 100,
+    "provenance": {
+        "document_id": "daad25c9-2da2-4ba4-927c-7a4564a22d85",
+        "submission_date": "2018-12-04T18:11:31.521Z",
+        "update_date": "2018-12-05T14:25:48.685Z"
+    }
+}
