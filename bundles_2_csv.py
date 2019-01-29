@@ -36,7 +36,7 @@ def flatten (master, obj, parent):
 def main():
 
     if len(sys.argv) != 2:
-        print('USAGE: python flatten.py path_to_bundle_directory')
+        print('USAGE: python bundles_2_csv.py path_to_bundle_directory')
         sys.exit(1)
 
     all_objects = []
