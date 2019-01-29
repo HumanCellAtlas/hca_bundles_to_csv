@@ -1,6 +1,3 @@
-from itertools import product
-from pprint import pprint as pp
-
 import glob
 import json
 import csv
