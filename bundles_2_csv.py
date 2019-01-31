@@ -20,7 +20,6 @@ def set_value(master, key, value):
         uniq = sorted(list(set(existing_values)))
         master[key] = " || ".join(uniq)
 
-
 def flatten (master, obj, parent):
     for key, value in obj.items():
         if key in ignore:
@@ -69,8 +68,6 @@ def cmp_keys(a,b):
         return 0
     return best_a - best_b
 
-
-
 def dump(all_keys, all_objects, outfile):
     all_keys.sort(key=functools.cmp_to_key(cmp_keys))
 
@@ -84,13 +81,11 @@ def dump(all_keys, all_objects, outfile):
         for obj in all_objects:
             csv_writer.writerow(obj)
 
-
 def main():
 
     if len(sys.argv) != 3:
         print('USAGE: python bundles_2_csv.py path_to_bundle_directory output_file')
         sys.exit(1)
-
 
     all_objects = []
     all_keys = []
@@ -100,12 +95,9 @@ def main():
     outfile = sys.argv[2]
 
     uuid4hex = re.compile('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
-
-
     for bundle in os.listdir(bundle_dir):
 
         if uuid4hex.match(bundle):
-
             obj = {}
             print("flattening " + bundle)
             obj["bundle_id"] = bundle
