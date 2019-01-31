@@ -74,8 +74,12 @@ def cmp_keys(a,b):
 def dump(all_keys, all_objects, outfile):
     all_keys.sort(key=functools.cmp_to_key(cmp_keys))
 
+    delim = ','
+    if outfile.endswith('.tab'):
+        delim = '\t'
+
     with open(outfile, 'w') as csvfile:
-        csv_writer = csv.DictWriter(csvfile, all_keys, delimiter='\t')
+        csv_writer = csv.DictWriter(csvfile, all_keys, delim)
         csv_writer.writeheader()
         for obj in all_objects:
             csv_writer.writerow(obj)
