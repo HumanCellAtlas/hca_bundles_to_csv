@@ -5,4 +5,4 @@ metadata into a single CSV file, one row per bundle.
 
 # Usage
 
-`python bundle_2_csv.py <path to bundle directory> > bundles.csv`
+`python bundle_2_csv.py <path to bundle directory> bundles.tsv`
