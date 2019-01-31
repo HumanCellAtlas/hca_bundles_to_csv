@@ -75,7 +75,7 @@ def dump(all_keys, all_objects, outfile):
     all_keys.sort(key=functools.cmp_to_key(cmp_keys))
 
     delim = ','
-    if outfile.endswith('.tab'):
+    if outfile.endswith('.tab') or outfile.endswith('.tsv'):
         delim = '\t'
 
     with open(outfile, 'w') as csvfile:
