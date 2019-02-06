@@ -40,6 +40,7 @@ def flatten (master, obj, parent):
     for key, value in obj.items():
         if key in ignore:
             continue
+
         if (parent):
             newkey = parent + "." + key
         else:
@@ -138,6 +139,9 @@ def main():
                 obj = {}
                 print("flattening " + bundle)
                 obj["folder"] = bundle
+                obj["file_name"] = content["file_core"]["file_name"]
+                obj["file_format"] = content["file_core"]["file_format"]
+
 
                 match = p.match(file)
                 schema_name = match.group(1)
