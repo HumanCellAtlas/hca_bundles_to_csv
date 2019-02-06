@@ -11,7 +11,23 @@ config = configparser.ConfigParser(allow_no_value=True)
 config.read('config.ini')
 ignore = config["IGNORE"].keys()
 
+def set_value_as_new_col(master, key, value):
+    if key not in master:
+        master[key] = str(value)
+    else:
+        start, count = key.rsplit(".", 1)
+        if count and count.isdigit():
+            key = start + ( int(count) + 1)
+        else:
+            key = key + ".1"
+
+        master[key] = str(value)
+
 def set_value(master, key, value):
+
+    # if config["LAYOUT"] == "multicolumn":
+    #     set_value_as_new_col(master, key, value)
+    # else:
     if key not in master:
         master[key] = str(value)
     else:
@@ -76,10 +92,22 @@ def dump(all_keys, all_objects, outfile):
         delim = '\t'
 
     with open(outfile, 'w') as csvfile:
-        csv_writer = csv.DictWriter(csvfile, all_keys, delim)
+        csv_writer = csv.DictWriter(csvfile, all_keys, delimiter=delim)
         csv_writer.writeheader()
         for obj in all_objects:
             csv_writer.writerow(obj)
+
+def get_file_uuids_from_bundle_dir(bundle_dir, bundle):
+    file_uuids = {}
+    for file in glob.glob(bundle_dir + os.sep + bundle + os.sep + '*.json'):
+        head, filename = os.path.split(file)
+
+        with open(file) as f:
+            data = json.load(f)
+            if data["schema_type"] == "file":
+                file_uuids[filename] = data
+
+    return file_uuids
 
 def main():
 
@@ -95,25 +123,41 @@ def main():
     outfile = sys.argv[2]
 
     uuid4hex = re.compile('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
+
+
+    # read each bundle directory
     for bundle in os.listdir(bundle_dir):
 
+        # ignore any directory that isn't named with a uuid
         if uuid4hex.match(bundle):
-            obj = {}
-            print("flattening " + bundle)
-            obj["bundle_id"] = bundle
 
-            for dir in glob.glob(bundle_dir + os.sep + bundle +  os.sep+ '*.json'):
-                head, tail = os.path.split(dir)
+            # get all the files
+            file_uuids = get_file_uuids_from_bundle_dir(bundle_dir, bundle)
 
-                # we don't need links.json
-                if "links" in tail:
-                    continue
+            for file, content in file_uuids.items():
+                obj = {}
+                print("flattening " + bundle)
+                obj["folder"] = bundle
 
-                match = p.match(tail)
-                metadoc = json.load(open(dir))
-                flatten(obj, metadoc, match.group(1))
+                match = p.match(file)
+                schema_name = match.group(1)
+                flatten(obj, content, schema_name)
 
-            if obj:
+                for dir in glob.glob(bundle_dir + os.sep + bundle +  os.sep+ '*.json'):
+
+
+                    head, filename = os.path.split(dir)
+
+                    # ignore files if in file per row mode and we don't need links.json
+                    if filename in file_uuids or "links" in filename:
+                        continue
+
+                    match = p.match(filename)
+                    schema_name = match.group(1)
+                    metadoc = json.load(open(dir))
+
+                    flatten(obj, metadoc, schema_name)
+
                 all_keys.extend(obj.keys())
                 all_keys = list(set(all_keys))
                 all_objects.append(obj)
