@@ -122,6 +122,7 @@ def main():
     p = re.compile('(.*)_\d+\.json')
     bundle_dir = sys.argv[1]
     outfile = sys.argv[2]
+    format_filter = ["fastq.gz"]
 
     uuid4hex = re.compile('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
 
@@ -134,14 +135,16 @@ def main():
 
             # get all the files
             file_uuids = get_file_uuids_from_bundle_dir(bundle_dir, bundle)
+            print("flattening " + bundle)
 
             for file, content in file_uuids.items():
                 obj = {}
-                print("flattening " + bundle)
                 obj["folder"] = bundle
                 obj["file_name"] = content["file_core"]["file_name"]
                 obj["file_format"] = content["file_core"]["file_format"]
 
+                if len(format_filter) > 0 and obj["file_format"] not in format_filter:
+                    continue
 
                 match = p.match(file)
                 schema_name = match.group(1)
