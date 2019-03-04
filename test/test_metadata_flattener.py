@@ -8,6 +8,9 @@ from unittest.mock import patch
 import filecmp
 import os, sys
 
+BASE_PATH = os.path.dirname(__file__)
+
+
 class TestSchemaTemplate(TestCase):
 
     def setUp(self):
@@ -43,14 +46,19 @@ class TestSchemaTemplate(TestCase):
         flattener = Flatten()
 
         flattener.add_bundle_files_to_row([self.doc1, self.doc2])
-        output = 'test1_tmp.csv'
+
+        expected = os.path.join(BASE_PATH, 'test1.csv')
+        output = os.path.join(BASE_PATH, 'test1_tmp.csv')
+
         flattener.dump(filename=output)
-        self.assertTrue(filecmp.cmp('test1.csv', output))
+        self.assertTrue(filecmp.cmp(expected, output))
         os.remove(output)
 
-        output = 'test1_tmp.tsv'
+        expected = os.path.join(BASE_PATH, 'test1.tsv')
+        output = os.path.join(BASE_PATH, 'test1_tmp.tsv')
+
         flattener.dump(filename=output, delim='\t')
-        self.assertTrue(filecmp.cmp('test1.tsv', output))
+        self.assertTrue(filecmp.cmp(expected, output))
         os.remove(output)
 
 
@@ -59,9 +67,10 @@ class TestSchemaTemplate(TestCase):
         flattener = Flatten()
 
         flattener.add_bundle_files_to_row([self.doc1, self.doc2], dir_name="1234-aaaa")
-        output = 'test2_tmp.csv'
+        expected = os.path.join(BASE_PATH, 'test2.csv')
+        output = os.path.join(BASE_PATH, 'test2_tmp.csv')
         flattener.dump(filename=output)
-        self.assertTrue(filecmp.cmp('test2.csv', output))
+        self.assertTrue(filecmp.cmp(expected, output))
         os.remove(output)
 
 
@@ -83,9 +92,11 @@ class TestSchemaTemplate(TestCase):
 
 
         flattener.add_bundle_files_to_row([self.doc1, self.doc2, doc3])
-        output = 'test3_tmp.csv'
+        expected = os.path.join(BASE_PATH, 'test1.csv')
+        output = os.path.join(BASE_PATH, 'test3_tmp.csv')
+
         flattener.dump(filename=output)
-        self.assertTrue(filecmp.cmp('test1.csv', output))
+        self.assertTrue(filecmp.cmp(expected, output))
         os.remove(output)
 
     def test_flatten_with_custom_filter(self):
@@ -106,9 +117,10 @@ class TestSchemaTemplate(TestCase):
 
 
         flattener.add_bundle_files_to_row([self.doc1, self.doc2, doc3])
-        output = 'test4_tmp.csv'
+        expected = os.path.join(BASE_PATH, 'test4.csv')
+        output = os.path.join(BASE_PATH, 'test4_tmp.csv')
         flattener.dump(filename=output)
-        self.assertTrue(filecmp.cmp('test4.csv', output))
+        self.assertTrue(filecmp.cmp(expected, output))
         os.remove(output)
 
     def test_ignore_links_bundle(self):
@@ -120,9 +132,11 @@ class TestSchemaTemplate(TestCase):
         }
 
         flattener.add_bundle_files_to_row([self.doc1, self.doc2, doc3])
-        output = 'test5_tmp.csv'
+        expected = os.path.join(BASE_PATH, 'test1.csv')
+        output = os.path.join(BASE_PATH, 'test5_tmp.csv')
+
         flattener.dump(filename=output)
-        self.assertTrue(filecmp.cmp('test1.csv', output))
+        self.assertTrue(filecmp.cmp(expected, output))
         os.remove(output)
 
     def test_no_schema_type(self):
@@ -180,11 +194,13 @@ class TestSchemaTemplate(TestCase):
 
 
     def test_bundle_parser(self):
-        testargs = ["file_metadata_to_csv", "-d", ".", "-o", "bundles_tmp.csv"]
+        expected = os.path.join(BASE_PATH, "bundles_tmp.csv")
+        input = os.path.join(BASE_PATH, "bundles.csv")
+        testargs = ["file_metadata_to_csv", "-d", ".", "-o", expected ]
         with patch.object(sys, 'argv', testargs):
              convert_bundle_dirs()
-        self.assertTrue(filecmp.cmp('bundles.csv', 'bundles_tmp.csv'))
-        os.remove("bundles_tmp.csv")
+        self.assertTrue(filecmp.cmp(expected, expected))
+        os.remove(expected)
 
 
 
