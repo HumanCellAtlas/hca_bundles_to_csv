@@ -1,0 +1,2 @@
+file_name,file_format,seq_file.foo,seq_file.list,seq_file.name,seq_file.nested.nest_list,seq_file.nested.nest_list_dic.yyy,seq_file.nested.nest_value
+test_file.fastq.gz,fastq.gz,bar 1,xxx||yyy,bob,xxx||yyy,zzz,zzz
