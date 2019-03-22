@@ -24,19 +24,20 @@ class Flatten:
              "path",
              "^file_name",
              "^file_format",
-             "^sequence_file. *",
-             "^analysis_file. *",
-             "^donor_organism. *",
-             "^specimen_from_organism. *",
-             "^cell_suspension. *",
-             "^. * protocol. *",
+             "^sequence_file.*",
+             "^analysis_file.*",
+             "^donor_organism.*",
+             "^specimen_from_organism.*",
+             "^cell_suspension.*",
+             "^.*protocol.*",
              "^project."
         ]
 
         self.default_ignore = ignore if ignore else [
             "describedBy",
             "schema_type",
-            "provenance",
+            "submission_date",
+            "update_date",
             "biomaterial_id",
             "process_id",
             "contributors",
