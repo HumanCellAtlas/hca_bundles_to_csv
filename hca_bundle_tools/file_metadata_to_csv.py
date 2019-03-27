@@ -16,7 +16,7 @@ import json
 
 class Flatten:
     def __init__(self, order = None, ignore = None, format_filter = None):
-        self.all_objects = []
+        self.all_objects_by_project_id = {}
         self.all_keys = []
         self.uuid4hex = re.compile('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
 
@@ -161,22 +161,32 @@ class Flatten:
             schema_name = self._get_schema_name_from_object(content)
             self._flatten(obj, content, schema_name)
 
+            project_uuid = None
             for metadata in list_of_metadata_objects:
 
                 # ignore files
                 if metadata["schema_type"] == "file" or metadata["schema_type"] == "link_bundle":
                     continue
+                elif metadata["schema_type"] == 'project':
+                    project_uuid = metadata['provenance']['document_id']
 
                 schema_name = self._get_schema_name_from_object(metadata)
                 self._flatten(obj, metadata, schema_name)
 
             self.all_keys.extend(obj.keys())
             self.all_keys = list(set(self.all_keys))
-            self.all_objects.append(obj)
-
+            assert project_uuid is not None
+            self.all_objects_by_project_id.setdefault(project_uuid, []).append(obj)
 
     def dump(self, filename='output.csv', delim=","):
+        self.write_csv(filename, delim, [y for x in self.all_objects_by_project_id.values() for y in x])
 
+    def dump_by_project(self, delim=','):
+        file_extension = 'tsv' if delim == '\t' else 'csv'
+        for project_uuid, objects in self.all_objects_by_project_id.items():
+            self.write_csv(f'{project_uuid}.{file_extension}', delim, objects)
+
+    def write_csv(self, filename, delim, objects):
         self.all_keys.sort(key=functools.cmp_to_key(self._cmp_keys))
 
         delim = delim
@@ -184,7 +194,7 @@ class Flatten:
         with open(filename, 'w') as csvfile:
             csv_writer = csv.DictWriter(csvfile, self.all_keys, delimiter=delim)
             csv_writer.writeheader()
-            for obj in self.all_objects:
+            for obj in objects:
                 csv_writer.writerow(obj)
 
 
@@ -199,7 +209,9 @@ def convert_bundle_dirs():
     parser.add_argument("-s", "--seperator", dest="seperator",
                         help="seperator/delimiter for csv", default=',')
     parser.add_argument("-f", "--filter", dest="filter",
-                        help="only get metadata for files with this file extension", default='fastq.gz')
+                        help="only get metadata for files with this file extension", default=None)
+    parser.add_argument('--project', dest='project', help="splits csv files by project and into separate folders",
+                        action='store_true')
 
     args = parser.parse_args()
 
@@ -221,7 +233,10 @@ def convert_bundle_dirs():
 
             flattener.add_bundle_files_to_row(metadata_files, dir_name=bundle)
 
-    flattener.dump(filename=args.filename, delim=args.seperator )
+    if args.project:
+        flattener.dump_by_project(delim=args.seperator)
+    else:
+        flattener.dump(filename=args.filename, delim=args.seperator)
 
 
 if __name__ == '__main__':
