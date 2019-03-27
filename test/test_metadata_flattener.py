@@ -15,7 +15,7 @@ class TestSchemaTemplate(TestCase):
 
     def setUp(self):
         self.doc1 = {
-            "describedBy" : "foo/seq_file",
+            "describedBy" : "foo/sequence_file",
             "schema_type" : "file",
             "provenance" : {
                 "document_id" : "file_id1",

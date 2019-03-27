@@ -1,2 +1,2 @@
-file_name,file_format,seq_file.foo,seq_file.list,seq_file.name,seq_file.nested.nest_list,seq_file.nested.nest_list_dic.yyy,seq_file.nested.nest_value
-test_file.fastq.gz,foo_bar.gz,bar 1,xxx||yyy,bob,xxx||yyy,zzz,zzz
+file_name,file_format,donor.list,donor.name,donor.nested.nest_list,donor.nested.nest_list_dic.yyy,donor.nested.nest_value,donor.provenance.document_id,seq_file.foo,seq_file.provenance.document_id
+test_file.fastq.gz,foo_bar.gz,xxx||yyy,bob,xxx||yyy,zzz,zzz,bm_id1,bar 1,file_id2

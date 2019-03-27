@@ -167,7 +167,7 @@ class Flatten:
                 if metadata["schema_type"] == "file" or metadata["schema_type"] == "link_bundle":
                     continue
 
-                schema_name = self._get_schema_name_from_object(content)
+                schema_name = self._get_schema_name_from_object(metadata)
                 self._flatten(obj, metadata, schema_name)
 
             self.all_keys.extend(obj.keys())
