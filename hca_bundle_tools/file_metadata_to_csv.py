@@ -155,7 +155,21 @@ class Flatten:
             if len(file_segments) > 1 and file_segments[-1] in self.default_blocked_file_ext:
                 continue
 
-            if '.zarr!' in obj["file_name"] and not '.zarr!.zattrs' in obj['file_name']:
+            def handle_zarray(anchor):
+                file_name = obj['file_name']
+                try:
+                    i = file_name.index(anchor)
+                except ValueError:
+                    return False
+                else:
+                    i += len(anchor) - 1
+                    dir_name, file_name = file_name[0:i], file_name[i+1:]
+                    if file_name == '.zattrs':
+                        obj['file_name'] = dir_name + '/'
+                        return False
+                return True
+
+            if handle_zarray('.zarr/') or handle_zarray('.zarr!'):
                 continue
 
             if  not (obj["file_name"] or obj["file_format"]):
@@ -205,8 +219,6 @@ class Flatten:
             csv_writer.writeheader()
             for obj in objects:
                 csv_writer.writerow(obj)
-
-
 
 
 def convert_bundle_dirs():
