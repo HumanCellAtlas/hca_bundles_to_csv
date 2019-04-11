@@ -22,8 +22,8 @@ class Flatten:
 
         self.default_order = order if order else [
              "path",
-             "^file_name",
-             "^file_format",
+             "^\\*\\.file_core\\.file_name",
+             "^\\*\\.file_core\\.file_format",
              "^sequence_file.*",
              "^analysis_file.*",
              "^donor_organism.*",
@@ -147,16 +147,16 @@ class Flatten:
         for file, content in file_uuids.items():
             obj = {}
 
-            obj["file_name"] = self._deep_get(content, ["file_core", "file_name"])
-            obj["file_format"] = self._deep_get(content, ["file_core", "file_format"])
+            obj["*.file_core.file_name"] = self._deep_get(content, ["file_core", "file_name"])
+            obj["*.file_core.file_format"] = self._deep_get(content, ["file_core", "file_format"])
 
-            file_segments = obj["file_name"].split('.')
+            file_segments = obj["*.file_core.file_name"].split('.')
 
             if len(file_segments) > 1 and file_segments[-1] in self.default_blocked_file_ext:
                 continue
 
             def handle_zarray(anchor):
-                file_name = obj['file_name']
+                file_name = obj['*.file_core.file_name']
                 try:
                     i = file_name.index(anchor)
                 except ValueError:
@@ -165,20 +165,20 @@ class Flatten:
                     i += len(anchor) - 1
                     dir_name, file_name = file_name[0:i], file_name[i+1:]
                     if file_name == '.zattrs':
-                        obj['file_name'] = dir_name + '/'
+                        obj['*.file_core.file_name'] = dir_name + '/'
                         return False
                 return True
 
             if handle_zarray('.zarr/') or handle_zarray('.zarr!'):
                 continue
 
-            if  not (obj["file_name"] or obj["file_format"]):
+            if not (obj["*.file_core.file_name"] or obj["*.file_core.file_format"]):
                 raise MissingFileNameError("expecting file_core.file_name")
 
             if dir_name:
-                obj["path"] = dir_name + os.sep + obj["file_name"]
+                obj["path"] = dir_name + os.sep + obj["*.file_core.file_name"]
 
-            if self.default_format_filter and obj["file_format"] not in self.default_format_filter:
+            if self.default_format_filter and obj["*.file_core.file_format"] not in self.default_format_filter:
                 continue
 
             schema_name = self._get_schema_name_from_object(content)
