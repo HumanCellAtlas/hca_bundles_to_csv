@@ -22,8 +22,6 @@ class Flatten:
 
         self.default_order = order if order else [
              "path",
-             "^bundle_.*",
-             "^\\*\\.provenance\\.update_date",
              "^\\*\\.file_core\\.file_name",
              "^\\*\\.file_core\\.file_format",
              "^sequence_file.*",
@@ -32,7 +30,11 @@ class Flatten:
              "^specimen_from_organism.*",
              "^cell_suspension.*",
              "^.*protocol.*",
-             "^project."
+             "^project.",
+             "^analysis_process.*",
+             "^process.*",
+             "^bundle_.*",
+             ".*provenance.update_date"
         ]
 
         self.default_ignore = ignore if ignore else [
@@ -151,8 +153,7 @@ class Flatten:
 
             obj['bundle_uuid'] = bundle_uuid
             obj['bundle_version'] = bundle_version
-            obj["*.provenance.update_date"] = self._deep_get(content, ["provenance", "update_date"])
-            obj["*.provenance.document_id"] = self._deep_get(content, ["provenance", "document_id"])
+            obj['*.provenance.update_date'] = self._deep_get(content, ["provenance", "update_date"])
             obj["*.file_core.file_name"] = self._deep_get(content, ["file_core", "file_name"])
             obj["*.file_core.file_format"] = self._deep_get(content, ["file_core", "file_format"])
 
