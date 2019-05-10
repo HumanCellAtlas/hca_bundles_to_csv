@@ -34,7 +34,7 @@ class Flatten:
              "^analysis_process.*",
              "^process.*",
              "^bundle_.*",
-             ".*provenance.update_date"
+             "^\\*\\.provenance\\.update_date"
         ]
 
         self.default_ignore = ignore if ignore else [
