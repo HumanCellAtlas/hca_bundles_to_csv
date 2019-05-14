@@ -30,7 +30,11 @@ class Flatten:
              "^specimen_from_organism.*",
              "^cell_suspension.*",
              "^.*protocol.*",
-             "^project."
+             "^project.",
+             "^analysis_process.*",
+             "^process.*",
+             "^bundle_.*",
+             "^\\*\\.provenance\\.update_date"
         ]
 
         self.default_ignore = ignore if ignore else [
@@ -135,7 +139,7 @@ class Flatten:
             return -1
         return best_a - best_b
 
-    def add_bundle_files_to_row(self, list_of_metadata_objects, dir_name=None):
+    def add_bundle_files_to_row(self, bundle_uuid, bundle_version, list_of_metadata_objects, dir_name=None):
         '''
 
         :param list_of_metadata_objects:
@@ -147,6 +151,9 @@ class Flatten:
         for file, content in file_uuids.items():
             obj = {}
 
+            obj['bundle_uuid'] = bundle_uuid
+            obj['bundle_version'] = bundle_version
+            obj['*.provenance.update_date'] = self._deep_get(content, ["provenance", "update_date"])
             obj["*.file_core.file_name"] = self._deep_get(content, ["file_core", "file_name"])
             obj["*.file_core.file_format"] = self._deep_get(content, ["file_core", "file_format"])
 
@@ -244,7 +251,9 @@ def convert_bundle_dirs():
 
     for bundle in os.listdir(bundle_dir):
         # ignore any directory that isn't named with a uuid
-        if uuid4hex.match(bundle):
+        sep = bundle.index('.')
+        bundle_uuid, bundle_version = bundle[:sep], bundle[sep+1:]
+        if uuid4hex.match(bundle_uuid):
             print ("flattening " + bundle)
             metadata_files = []
             for file in glob.glob(bundle_dir + os.sep + bundle + os.sep + '*.json'):
@@ -252,7 +261,7 @@ def convert_bundle_dirs():
                     data = json.load(f)
                     metadata_files.append(data)
 
-            flattener.add_bundle_files_to_row(metadata_files, dir_name=bundle)
+            flattener.add_bundle_files_to_row(bundle_uuid, bundle_version, metadata_files, dir_name=bundle)
 
     if args.project:
         flattener.dump_by_project(delim=args.seperator)
