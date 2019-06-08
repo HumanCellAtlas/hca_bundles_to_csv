@@ -34,7 +34,7 @@ class Flatten:
              "^analysis_process.*",
              "^process.*",
              "^bundle_.*",
-             "^\\*\\.provenance\\.update_date"
+             "^file_.*"
         ]
 
         self.default_ignore = ignore if ignore else [
@@ -56,20 +56,24 @@ class Flatten:
         # TODO temp until block filetype is needed
         self.default_blocked_file_ext = {'csv', 'txt', 'pdf'}
 
-    def _get_file_uuids_from_objects(self, list_of_metadata_objects):
-        file_uuids = {}
+    def _get_file_info_from_objects(self, manifest, list_of_metadata_objects):
+        file_info = {}
+        file_manifests = {file_manifest['name']: file_manifest
+                          for file_manifest in manifest['bundle']['files'] if not file_manifest['indexed']}
+
         for object in list_of_metadata_objects:
             if "schema_type" not in object:
                 raise MissingSchemaTypeError("JSON objects must declare a schema type")
 
-            if object["schema_type"] == "file" and self._deep_get(object, ["provenance", "document_id"]):
-                file_uuid = self._deep_get(object, ["provenance", "document_id"])
-                file_uuids[file_uuid] = object
+            file_name = self._deep_get(object, ["file_core", "file_name"])
+            if object["schema_type"] == "file" and file_name:
+                file_manifest = file_manifests[file_name]
+                file_info[file_manifest['uuid']] = {'metadata': object, 'manifest': file_manifest}
 
-        if not file_uuids:
+        if not file_info:
             raise MissingFileTypeError("no fileuuids found in any of the metadata objects")
 
-        return file_uuids
+        return file_info
 
     def _deep_get(self, d, keys):
         if not keys or d is None:
@@ -139,23 +143,26 @@ class Flatten:
             return -1
         return best_a - best_b
 
-    def add_bundle_files_to_row(self, bundle_uuid, bundle_version, list_of_metadata_objects, dir_name=None):
+    def add_bundle_files_to_row(self, manifest, list_of_metadata_objects, dir_name=None):
         '''
 
         :param list_of_metadata_objects:
         :return:
         '''
         # get all the files
-        file_uuids = self._get_file_uuids_from_objects(list_of_metadata_objects)
+        file_info = self._get_file_info_from_objects(manifest, list_of_metadata_objects)
 
-        for file, content in file_uuids.items():
+        for file_uuid, content in file_info.items():
+            file_metadata = content['metadata']
+            file_manifest = content['manifest']
             obj = {}
 
-            obj['bundle_uuid'] = bundle_uuid
-            obj['bundle_version'] = bundle_version
-            obj['*.provenance.update_date'] = self._deep_get(content, ["provenance", "update_date"])
-            obj["*.file_core.file_name"] = self._deep_get(content, ["file_core", "file_name"])
-            obj["*.file_core.file_format"] = self._deep_get(content, ["file_core", "file_format"])
+            obj['bundle_uuid'] = manifest['bundle']['uuid']
+            obj['bundle_version'] = manifest['bundle']['version']
+            obj['file_uuid'] = file_manifest['uuid']
+            obj['file_version'] = file_manifest['version']
+            obj["*.file_core.file_name"] = self._deep_get(file_metadata, ["file_core", "file_name"])
+            obj["*.file_core.file_format"] = self._deep_get(file_metadata, ["file_core", "file_format"])
 
             file_segments = obj["*.file_core.file_name"].split('.')
 
@@ -188,20 +195,20 @@ class Flatten:
             if self.default_format_filter and obj["*.file_core.file_format"] not in self.default_format_filter:
                 continue
 
-            schema_name = self._get_schema_name_from_object(content)
-            self._flatten(obj, content, schema_name)
+            schema_name = self._get_schema_name_from_object(file_metadata)
+            self._flatten(obj, file_metadata, schema_name)
 
             project_uuid = None
-            for metadata in list_of_metadata_objects:
+            for file_metadata in list_of_metadata_objects:
 
                 # ignore files
-                if metadata["schema_type"] == "file" or metadata["schema_type"] == "link_bundle":
+                if file_metadata["schema_type"] == "file" or file_metadata["schema_type"] == "link_bundle":
                     continue
-                elif metadata["schema_type"] == 'project':
-                    project_uuid = metadata['provenance']['document_id']
+                elif file_metadata["schema_type"] == 'project':
+                    project_uuid = file_metadata['provenance']['document_id']
 
-                schema_name = self._get_schema_name_from_object(metadata)
-                self._flatten(obj, metadata, schema_name)
+                schema_name = self._get_schema_name_from_object(file_metadata)
+                self._flatten(obj, file_metadata, schema_name)
 
             self.all_keys.extend(obj.keys())
             self.all_keys = list(set(self.all_keys))
@@ -253,15 +260,17 @@ def convert_bundle_dirs():
         # ignore any directory that isn't named with a uuid
         sep = bundle.index('.')
         bundle_uuid, bundle_version = bundle[:sep], bundle[sep+1:]
+        with open(os.path.join(bundle_dir, bundle, 'bundle.json'), 'r') as manifest_file:
+            manifest = json.load(manifest_file)
         if uuid4hex.match(bundle_uuid):
             print ("flattening " + bundle)
             metadata_files = []
             for file in glob.glob(bundle_dir + os.sep + bundle + os.sep + '*.json'):
-                with open(file) as f:
-                    data = json.load(f)
-                    metadata_files.append(data)
-
-            flattener.add_bundle_files_to_row(bundle_uuid, bundle_version, metadata_files, dir_name=bundle)
+                if 'bundle.json' not in file:
+                    with open(file) as f:
+                        data = json.load(f)
+                        metadata_files.append(data)
+            flattener.add_bundle_files_to_row(manifest, metadata_files, dir_name=bundle)
 
     if args.project:
         flattener.dump_by_project(delim=args.seperator)
