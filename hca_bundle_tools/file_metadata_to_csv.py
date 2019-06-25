@@ -241,6 +241,8 @@ def convert_bundle_dirs():
                         help="path to bundle directory", metavar="FILE", default=".")
     parser.add_argument("-o", "--output", dest="filename",
                         help="path to output file", default='bundles.csv')
+    parser.add_argument("-b", "--browser-manifest", dest="browser_manifest",
+                        help="path to the manifest from the Data Browser", default=None)
     parser.add_argument("-s", "--seperator", dest="seperator",
                         help="seperator/delimiter for csv", default=',')
     parser.add_argument("-f", "--filter", dest="filter",
@@ -256,12 +258,44 @@ def convert_bundle_dirs():
 
     uuid4hex = re.compile('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
 
+    manifest_files = {}
+
+    if args.browser_manifest is not None:
+        def _create_file_manfiest(row):
+            return {
+                'name': row['file_name'],
+                'uuid': row['file_uuid'],
+                'version': row['file_version'],
+                'indexed': False
+            }
+
+        with open(args.browser_manifest, 'r') as manifest_file:
+            reader = csv.DictReader(manifest_file, delimiter='\t')
+            for row in reader:
+                bundle_fqid = f'{row["bundle_uuid"]}.{row["bundle_version"]}'
+
+                if bundle_fqid in manifest_files.keys():
+                    manifest_files[bundle_fqid]['bundle']['files'].append(_create_file_manfiest(row))
+                else:
+                    manifest_files[bundle_fqid] = {
+                        'bundle': {
+                            'uuid': row["bundle_uuid"],
+                            'version': row["bundle_version"],
+                            'files': [_create_file_manfiest(row)]
+                        }
+                    }
+
     for bundle in os.listdir(bundle_dir):
         # ignore any directory that isn't named with a uuid
         sep = bundle.index('.')
         bundle_uuid, bundle_version = bundle[:sep], bundle[sep+1:]
-        with open(os.path.join(bundle_dir, bundle, 'bundle.json'), 'r') as manifest_file:
-            manifest = json.load(manifest_file)
+
+        if args.browser_manifest is None:
+            with open(os.path.join(bundle_dir, bundle, 'bundle.json'), 'r') as manifest_file:
+                manifest = json.load(manifest_file)
+        else:
+            manifest = manifest_files[bundle]
+
         if uuid4hex.match(bundle_uuid):
             print ("flattening " + bundle)
             metadata_files = []
