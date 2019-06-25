@@ -65,8 +65,10 @@ class Flatten:
             if "schema_type" not in object:
                 raise MissingSchemaTypeError("JSON objects must declare a schema type")
 
-            file_name = self._deep_get(object, ["file_core", "file_name"])
-            if object["schema_type"] == "file" and file_name:
+            if object["schema_type"] == "file":
+                file_name = self._deep_get(object, ["file_core", "file_name"])
+                if file_name is None:
+                    raise MissingFileNameError("expecting file_core.file_name")
                 file_manifest = file_manifests[file_name]
                 file_info[file_manifest['uuid']] = {'metadata': object, 'manifest': file_manifest}
 
@@ -186,9 +188,6 @@ class Flatten:
             if handle_zarray('.zarr/') or handle_zarray('.zarr!'):
                 continue
 
-            if not (obj["*.file_core.file_name"] or obj["*.file_core.file_format"]):
-                raise MissingFileNameError("expecting file_core.file_name")
-
             if dir_name:
                 obj["path"] = dir_name + os.sep + obj["*.file_core.file_name"]
 
@@ -258,45 +257,45 @@ def convert_bundle_dirs():
 
     uuid4hex = re.compile('^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', re.I)
 
-    manifest_files = {}
+    converted_browser_manifests = {}
 
     if args.browser_manifest is not None:
-        def _create_file_manfiest(row):
-            return {
-                'name': row['file_name'],
-                'uuid': row['file_uuid'],
-                'version': row['file_version'],
-                'indexed': False
-            }
-
+        # convert the browser manifest to a dict of DSS manifest mapped by bundle_uuid
         with open(args.browser_manifest, 'r') as manifest_file:
             reader = csv.DictReader(manifest_file, delimiter='\t')
             for row in reader:
-                bundle_fqid = f'{row["bundle_uuid"]}.{row["bundle_version"]}'
-
-                if bundle_fqid in manifest_files.keys():
-                    manifest_files[bundle_fqid]['bundle']['files'].append(_create_file_manfiest(row))
+                bundle_uuid = row["bundle_uuid"]
+                file_manifest = {
+                    'name': row['file_name'],
+                    'uuid': row['file_uuid'],
+                    'version': row['file_version'],
+                    'indexed': False
+                }
+                if bundle_uuid in converted_browser_manifests.keys():
+                    converted_browser_manifests[bundle_uuid]['bundle']['files'].append(file_manifest)
                 else:
-                    manifest_files[bundle_fqid] = {
+                    converted_browser_manifests[bundle_uuid] = {
                         'bundle': {
-                            'uuid': row["bundle_uuid"],
+                            'uuid': bundle_uuid,
                             'version': row["bundle_version"],
-                            'files': [_create_file_manfiest(row)]
+                            'files': [file_manifest]
                         }
                     }
 
     for bundle in os.listdir(bundle_dir):
-        # ignore any directory that isn't named with a uuid
+        if '.' not in bundle:
+            continue
+
         sep = bundle.index('.')
         bundle_uuid, bundle_version = bundle[:sep], bundle[sep+1:]
 
-        if args.browser_manifest is None:
-            with open(os.path.join(bundle_dir, bundle, 'bundle.json'), 'r') as manifest_file:
-                manifest = json.load(manifest_file)
-        else:
-            manifest = manifest_files[bundle]
-
+        # ignore any directory that isn't named with a uuid
         if uuid4hex.match(bundle_uuid):
+            if args.browser_manifest is None:
+                with open(os.path.join(bundle_dir, bundle, 'bundle.json'), 'r') as manifest_file:
+                    manifest = json.load(manifest_file)
+            else:
+                manifest = converted_browser_manifests[bundle_uuid]
             print ("flattening " + bundle)
             metadata_files = []
             for file in glob.glob(bundle_dir + os.sep + bundle + os.sep + '*.json'):

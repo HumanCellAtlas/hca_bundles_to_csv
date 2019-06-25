@@ -1,2 +1,2 @@
-file_name,file_format,donor.list,donor.name,donor.nested.nest_list,donor.nested.nest_list_dic.yyy,donor.nested.nest_value,donor.provenance.document_id,seq_file.foo,seq_file.provenance.document_id
-test_file.fastq.gz,foo_bar.gz,xxx||yyy,bob,xxx||yyy,zzz,zzz,bm_id1,bar 1,file_id2
+*.file_core.file_name,*.file_core.file_format,project.project_core.project_short_name,project.project_core.project_title,project.provenance.document_id,bundle_uuid,bundle_version,file_uuid,file_version,donor.list,donor.name,donor.nested.nest_list,donor.nested.nest_list_dic.yyy,donor.nested.nest_value,donor.provenance.document_id,seq_file.foo,seq_file.provenance.document_id
+test_file.fastq.gz,foo_bar.gz,test short name,test title,88888888-8888-8888-8888-888888888888,00000000-0000-0000-0000-000000000000,1999-01-00T000000.000000Z,99999999-9999-9999-9999-999999999999,1999-01-00T000000.000000Z,xxx||yyy,bob,xxx||yyy,zzz,zzz,bm_id1,bar 1,file_id2
